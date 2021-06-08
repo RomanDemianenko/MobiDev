@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    {% if user.is_superuser %}
+        <form action="" method="get">
+            {{ filterset.form.as_p }}
+            <input type="submit"/>
+        </form>
+        {#        {% for obj in filter.qs %}#}
+        {#            {{ obj.first_name }} - {{ obj.last.name }}<br/>#}
+        {#        {% endfor %}#}
+
+        {#        <form method="get">#}
+        {#            <input type="submit" name="orderby" value="first_name">#}
+        {#        {% for obj in object_list %}#}
+        {#            <p><input type="radio" name="first_name" value={{ obj.first_name }}> {{ obj.first_name }}</p>#}
+        {#        {% endfor %}#}
+        {#        </form>#}
+        {#        <form action="" method="get">#}
+        {#            <p>First_name: <input type="text" value={{ filter }} name="first_name"/></p>#}
+        {#            <p>order_by: <input type="text" value={{ orderby }} name="orderby"/></p>#}
+        {#            <p><input type="submit" name="submit" value="submit"/></p>#}
+        {#        </form>#}
+        {#        {% for obj in filter.qs %}#}
+        {#            {{ obj.first_name }} - ${{ obj.last_name }}<br/>#}
+        {#        {% endfor %}#}
+        <p> People who working in ur company</p>
+        {% for obj in object_list %}
+
+            <p style="font-size: 20px">{{ obj.first_name }} {{ obj.last_name }} {{ obj.email }}
+
+                <a href="{% url 'worker_detail' obj.id %}">Detail view</a>
+                <a href="{% url 'worker_update' obj.id %}">Change info</a>
+                <a href="{% url 'worker_delete' obj.id %}">Delete the worker</a><</p>
+
+        {% endfor %}
+    {% endif %}
+{% endblock %}

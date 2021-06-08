@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+    <form>
+        {% if user.is_superuser %}
+            <a href="{% url 'add_worker'  office.id %}">Add worker to office</a>
+        {% endif %}
+        {% csrf_token %}
+        <p>Title: {{ office.office_name }}</p>
+        <p>Address: {{ office.address }}</p>
+        <p>Country: {{ office.country }}</p>
+        <p>City: {{ office.city }}</p>
+        <p>Region: {{ office.region }}</p>
+        <p>Worker: {{ office.worker }}</p>
+
+    </form>
+{% endblock %}

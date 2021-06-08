@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}<h2>Company registration</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                <strong>{{ message }}</strong>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {#<div class="row" style="margin-bottom: 50px; margin-top: 50px">#}
+    <h2 class="text-center">Registration a new company </h2>
+    <form action="{% url 'register_company' %}" method="POST">
+        {% csrf_token %}
+
+        {% for field in form %}
+            <p>{{ field.label }}</p>
+            <p>{{ field }}</p>
+
+        {% endfor %}
+        {% csrf_token %}
+        {% for field in formA %}
+            <p>{{ field.label }}</p>
+            <p>{{ field }}</p>
+
+        {% endfor %}
+
+        <input type="submit" class="btn btn-success" value="REGISTRATION">
+    </form>
+    {#</div>#}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{#    {% if user.username %}#}
+        <p> List of our vehicle in company {{ user.company }}</p>
+        {#        {% for obj in object_list %}#}
+        {#        <a href="{% url 'worker_office' obj.id %}">Your office</a>#}
+        {#        {% endfor %}#}
+        <form action="" method="get">
+            {{ filterset.form.as_p }}
+            <input type="submit"/>
+        </form>
+        {% for obj in object_list %}
+
+            <p style="font-size: 30px">Title {{ obj.licence_plate }} located in {{ obj.office }} drive
+                by {{ obj.driver }}
+                {#                <a href="{% url 'office_detail' obj.id %}">Detail view</a>#}
+                {% if user.is_superuser %}
+                    <a href="{% url 'vehicle_update' obj.id %}">Change info</a>
+                    <a href="{% url 'worker_vehicle' obj.id %}">Add vehicle to office and belong driver</a>
+                    <a href="{% url 'vehicle_delete' obj.id %}">Delete the vehicle</a>
+                    {#                    <a href="{% url 'office_update' obj.id %}">Change info</a>#}
+                    {#                    <a href="{% url 'office_delete' obj.id %}">Delete the office</a>#}
+                {% endif %}
+            </p>
+        {% endfor %}
+{#    {% endif %}#}
+{% endblock %}

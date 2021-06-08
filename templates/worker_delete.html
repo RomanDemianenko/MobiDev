@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+    <form method="POST">
+        {% csrf_token %}
+        <h1> Are you sure, that you what to delete {{ obj.email }}?</h1>
+        <p><button type="submit" value="Yes">Yes</button> <a href="{% url 'service' %}">Cancel</a></p>
+    </form>
+
+{% endblock %}

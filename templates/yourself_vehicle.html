@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+    <form>
+        {% csrf_token %}
+        {% for obj in object_list %}
+            <p>Licence Plate: {{ obj.licence_plate }}</p>
+            <p>Name: {{ obj.name }}</p>
+            <p>Model: {{ obj.model }}</p>
+            <p>Year of manufacture: {{ obj.year_of_manufacture }}</p>
+        {% endfor %}
+    </form>
+{% endblock %}
