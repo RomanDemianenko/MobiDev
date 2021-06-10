@@ -1,12 +1,16 @@
-version: '3'
-
-services:
-  web:
-    build: .
-    command: python3 manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/code
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
+web:
+  build: .
+  environment:
+    MYENV: venv
+  volumes:
+    - .:/code
+web_migrate:
+  extends:
+    service: web
+  command: python manage.py migrate
+web_run:
+  extends:
+    service: web
+  command: python manage.py runserver 0.0.0.0:8000
+  ports:
+    - "8000:8000"

@@ -16,6 +16,7 @@ class AuthViewSet(viewsets.ModelViewSet):
     """User can create profile and company, and user get admin role in this company"""
     permission_classes = [AllowAny, ]
     serializer_class = CreateCompanySerializer
+    queryset = MyUser.objects.filter(is_staff=True)
 
 
 class AuthToken(ObtainAuthToken):
