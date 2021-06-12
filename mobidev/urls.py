@@ -24,7 +24,7 @@ from service.api.resourse import AuthToken, AuthViewSet, WorkerViewSet, CompanyV
 from service.views import CompanyRegistrationView, UserLogout, ServiceList, WorkerCreate, WorkerList, WorkerDetail, \
     WorkerUpdate, WorkerDelete, CompanyDetail, CompanyUpdate, ProfileUpdate, OfficeCreate, OfficeList, OfficeDetail, \
     OfficeUpdate, OfficeDelete, AddWorkerToOfficeUpdate, WorkerOfficeList, VehicleCreate, VehicleList, \
-    AddWorkerToVehicleUpdate, VehicleUpdate, VehicleDelete, MyVehicleList, UserLoginView
+    AddWorkerToVehicleUpdate, VehicleUpdate, VehicleDelete, MyVehicleList
 
 router = routers.SimpleRouter()
 router.register(r'auth', AuthViewSet, basename='auth')
@@ -47,8 +47,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('service/', ServiceList.as_view(), name='service'),
     path('company-regist/', CompanyRegistrationView.as_view(), name='register_company'),
-    path('login/', views.LoginView.as_view(template_name='login.html', success_url='/service/'), name='login'),
-    # path('login/', UserLoginView.as_view(), name='login'),
+    path('login/', views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', UserLogout.as_view(), name='logout'),
     path('worker_create/', WorkerCreate.as_view(), name='worker_create'),
     path('worker_list/', WorkerList.as_view(), name='worker_list'),

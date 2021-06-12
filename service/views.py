@@ -18,35 +18,6 @@ from service.forms import LoginForm, RegistCompanyForm, CompanyForm, WorkerProfi
 from service.models import MyUser, Company, Office, Vehicle
 
 
-class UserLoginView(LoginView):
-    template_name = 'login.html'
-    success_url = '/service/'
-
-    def get(self, request, *args, **kwargs):
-        form = AuthenticationForm(request.POST)
-        context = {'form': form}
-        return render(request, 'login.html', context)
-
-    def post(self, request, *args, **kwargs):
-        form = AuthenticationForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-            user = authenticate(email=email, password=password)
-
-            if user is not None:
-                login(request, user)
-                messages.success(request, 'You are login')
-                return HttpResponseRedirect('/service/')
-
-        else:
-            messages.warning(request, 'Your login or password not correct')
-            return HttpResponseRedirect('/service/')
-
-        context = {'form': form}
-        return render(request, 'login.html', context)
-
-
 class CompanyRegistrationView(CreateView):
     """User can create profile and company, and user get admin role in this company"""
     model = MyUser
