@@ -19,7 +19,7 @@ from django.contrib.auth import views
 from rest_framework import routers
 
 from service.api.resourse import AuthToken, WorkerViewSet, CompanyViewSet, ProfileViewSet, OfficeViewSet, \
-    DetailOfficeViewSet, WorkerUpViewsSet, WorkerOfficeViewSet, WorkerOfficeDetailViewSet, VehicleViewSet, \
+    DetailOfficeViewSet, WorkerUpViewsSet, AssignWorkerToOfficeViewSet, WorkerOfficeDetailViewSet, VehicleViewSet, \
     VehicleChangeViewSet, VehicleProfileViewSet, CompanyCreateViewSet
 
 
@@ -31,7 +31,7 @@ router.register(r'company', CompanyViewSet, basename='company')
 router.register(r'profile', ProfileViewSet, basename='profile')
 router.register(r'office', OfficeViewSet, basename='office')
 router.register(r'detail_office', DetailOfficeViewSet, basename='office')
-router.register(r'worker_office', WorkerOfficeViewSet, basename='worker_office')
+router.register(r'worker_office', AssignWorkerToOfficeViewSet, basename='worker_office')
 router.register(r'worker_office_detail', WorkerOfficeDetailViewSet, basename='worker_office_detail')
 router.register(r'vehicle', VehicleViewSet, basename='vehicle')
 router.register(r'vehicle_change', VehicleChangeViewSet, basename='vehicle_change')

@@ -4,18 +4,19 @@ from rest_framework import serializers
 from service.models import MyUser, Company, Office, Vehicle
 
 
-class CreateCompanySerializer(serializers.ModelSerializer):
+class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
         fields = ('id', 'company_name')
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
-    """User can create profile and company, and user get admin role in this company"""
+    """Serializer for Create Company, where user automatically become the Admin of Company.
+    We use nested Companyserializer and take filed company_name.  """
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     confirm_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     email = serializers.EmailField(label="email", required=True)
-    company = CreateCompanySerializer()
+    company = CompanySerializer()
 
     class Meta:
         model = MyUser
@@ -29,6 +30,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
 
 class MyAuthTokenSerializer(serializers.Serializer):
+    """We can get Token by email """
     email = serializers.EmailField(label="Email", required=True)
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
 
@@ -52,6 +54,7 @@ class MyAuthTokenSerializer(serializers.Serializer):
 
 
 class WorkerCreateSerializer(serializers.ModelSerializer):
+    """Admin can create worker for his company."""
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     confirm_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     email = serializers.EmailField(label="Email", required=True)
@@ -74,6 +77,7 @@ class CompaniesSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    """Worker can see his profile, and change it, exclude EMAIL"""
     class Meta:
         model = MyUser
         fields = ('id', 'first_name', 'last_name', 'email', 'password')
@@ -96,7 +100,8 @@ class OfficeDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'worker')
 
 
-class AddWorkerToOfficeSerializer(serializers.ModelSerializer):
+class AssignWorkerToOfficeSerializer(serializers.ModelSerializer):
+    """We assign worker to office, and he can be only in one office"""
     class Meta:
         model = Office
         fields = ('id', 'worker')
@@ -109,6 +114,8 @@ class AddWorkerToOfficeSerializer(serializers.ModelSerializer):
 
 
 class VehicleSerializer(serializers.ModelSerializer):
+    """Serializer for create Vehicle. When admin choose driver and office for vehicle,
+     driver must work in the same office, which choose Admin. """
     class Meta:
         model = Vehicle
         fields = ('id', 'licence_plate', 'name', 'model', 'year_of_manufacture', 'office', 'driver')

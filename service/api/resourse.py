@@ -6,13 +6,15 @@ from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import get_object_or_404
 from service.api.serializers import MyAuthTokenSerializer, WorkerCreateSerializer, \
-    CompaniesSerializer, ProfileSerializer, OfficeSerializer, OfficeDetailSerializer, AddWorkerToOfficeSerializer, \
+    CompaniesSerializer, ProfileSerializer, OfficeSerializer, OfficeDetailSerializer, AssignWorkerToOfficeSerializer, \
     VehicleSerializer, UserRegisterSerializer
 from service.models import MyUser, Company, Office, Vehicle
 from rest_framework.authtoken.models import Token
 
 
 class CompanyCreateViewSet(viewsets.ModelViewSet):
+    """View for Create Company, where user automatically become the Admin of Company.
+    Also, we write Name of Company.  """
     permission_classes = [AllowAny, ]
     serializer_class = UserRegisterSerializer
 
@@ -230,16 +232,16 @@ class DetailOfficeViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class WorkerOfficeViewSet(viewsets.ModelViewSet):
-    """Admin can appoint to one of companies offices"""
+class AssignWorkerToOfficeViewSet(viewsets.ModelViewSet):
+    """Admin can assign worker to one of companies offices"""
     permission_classes = [IsAdminUser, ]
-    serializer_class = AddWorkerToOfficeSerializer
+    serializer_class = AssignWorkerToOfficeSerializer
     queryset = Office.objects.all()
 
     def put(self, request, *args, **kwargs):
         pk = self.kwargs.get('pk')
         office = get_object_or_404(Office.objects.filter(id=pk, company=self.request.user.company))
-        serializer = AddWorkerToOfficeSerializer(instance=office, data=request.data, partial=True)
+        serializer = AssignWorkerToOfficeSerializer(instance=office, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -263,7 +265,7 @@ class WorkerOfficeDetailViewSet(viewsets.ModelViewSet):
 
 
 class VehicleViewSet(viewsets.ModelViewSet):
-    """Admin can create vehicle and add optinal office and driver"""
+    """Admin can create vehicle and optionally add office and driver"""
     permission_classes = [IsAdminUser, ]
     serializer_class = VehicleSerializer
     queryset = Vehicle.objects.all()
