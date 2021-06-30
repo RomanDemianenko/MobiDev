@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'service',
     'django_filters',
     'rest_framework.authtoken',
-    'oauth2_provider',
     'rest_framework',
 ]
 
@@ -73,16 +72,17 @@ TEMPLATES = [
 ]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-        'rest_framework.permissions.IsAdminUser'
     ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ]
 
 }
 WSGI_APPLICATION = 'mobidev.wsgi.application'

@@ -1,5 +1,4 @@
-import datetime
-
+from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -10,10 +9,6 @@ from django.db import models
 class Company(models.Model):
     company_name = models.CharField(max_length=20)
     address = models.CharField(max_length=50, blank=True, null=True)
-
-    # admin = models.OneToOneField(MyUser, on_delete=models.CASCADE)
-    # staff = models.ForeignKey(MyUser, on_delete=models.CASCADE, blank=True, null=True)
-    # office = models.ForeignKey(Office, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return f'{self.company_name}'
@@ -43,8 +38,8 @@ class Office(models.Model):
 
 class Vehicle(models.Model):
     """Vehicle create, year of manufacture - you can choose between from 1984 to today"""
-    year = [(r, r) for r in range(1984, datetime.date.today().year + 1)]
-    today = datetime.date.today().year
+    year = [(r, r) for r in range(1984, timezone.now().year + 1)]
+    today = timezone.now().year
     licence_plate = models.CharField(max_length=20)
     name = models.CharField(max_length=50)
     model = models.CharField(max_length=50)

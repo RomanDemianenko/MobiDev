@@ -1,26 +1,40 @@
 from django.contrib.auth.hashers import make_password
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, permissions
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import get_object_or_404
-from service.api.serializers import CreateCompanySerializer, MyAuthTokenSerializer, WorkerCreateSerializer, \
-    CompaniesSerializer, ProfileSerializer, OfficeSerializer, OfficeDetailSerializer, WorkerOfficeSerializer, \
-    VehicleSerializer
+from service.api.serializers import MyAuthTokenSerializer, WorkerCreateSerializer, \
+    CompaniesSerializer, ProfileSerializer, OfficeSerializer, OfficeDetailSerializer, AddWorkerToOfficeSerializer, \
+    VehicleSerializer, UserRegisterSerializer
 from service.models import MyUser, Company, Office, Vehicle
 from rest_framework.authtoken.models import Token
 
 
-class AuthViewSet(viewsets.ModelViewSet):
-    """User can create profile and company, and user get admin role in this company"""
+class CompanyCreateViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny, ]
-    serializer_class = CreateCompanySerializer
-    queryset = MyUser.objects.all()
+    serializer_class = UserRegisterSerializer
 
-    def get_queryset(self):
-        queryset = MyUser.objects.filter(id=self.request.user.id, is_staff=True)
-        return queryset
+    def create(self, request, *args, **kwargs):
+        serializer = UserRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if serializer.validated_data['password'] != serializer.validated_data['confirm_password']:
+            data = {"Passwords don`t pass"}
+            return Response(data=data, status=status.HTTP_409_CONFLICT)
+        if serializer.is_valid():
+            company = serializer.validated_data['company']
+            company_name = company['company_name']
+            company_obj = Company.objects.create(company_name=company_name)
+            serializer.validated_data['company'] = company_obj
+            serializer.validated_data.pop('confirm_password')
+            user = MyUser.objects.create(is_staff=True, **serializer.validated_data)
+            user.set_password(serializer.validated_data['password'])
+            user.save()
+            company_obj.save()
+            data = {'success': 'You create the company Successfully'}
+            return Response(data=data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AuthToken(ObtainAuthToken):
@@ -43,47 +57,28 @@ class WorkerViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser, ]
     serializer_class = WorkerCreateSerializer
     queryset = MyUser.objects.all()
-    authentication_classes = [TokenAuthentication, ]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['first_name', 'last_name', 'email']
 
     def create(self, request, *args, **kwargs):
         serializer = WorkerCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.validated_data['password'] != serializer.validated_data['confirm_password']:
-            return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
+            data = {"Passwords don`t pass"}
+            return Response(data=data, status=status.HTTP_409_CONFLICT)
         if serializer.is_valid():
-            # company = serializer.validated_data['company']
             company = self.request.user.company
-            user = MyUser.objects.create(
-                first_name=serializer.validated_data['first_name'],
-                last_name=serializer.validated_data['last_name'],
-                email=serializer.validated_data['email'],
-                password=serializer.validated_data['password'],
-                company=company)
+            serializer.validated_data.pop('confirm_password')
+            user = MyUser.objects.create(company=company, **serializer.validated_data)
             user.set_password(serializer.validated_data['password'])
             user.save()
             company.save()
-            data = {'success': 'You create the company Successfully'}
+            data = {'success': 'You add worker to company'}
             return Response(data=data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
         queryset = MyUser.objects.filter(company=self.request.user.company, is_staff=False)
-        first_name = self.request.query_params.get('first_name', None)
-        last_name = self.request.query_params.get('last_name', None)
-        email = self.request.query_params.get('email', None)
-
-        if first_name:
-            queryset = queryset.filter(first_name=first_name)
-
-        elif last_name:
-            queryset = queryset.filter(last_name=last_name)
-
-        elif email:
-            queryset = queryset.filter(email=email)
-
-        else:
-            queryset = MyUser.objects.filter(company=self.request.user.company, is_staff=False)
-
         return queryset
 
 
@@ -93,7 +88,6 @@ class WorkerUpViewsSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser, ]
     serializer_class = ProfileSerializer
     queryset = MyUser.objects.all()
-    authentication_classes = [TokenAuthentication, ]
 
     def get_queryset(self):
         pk = self.kwargs.get('pk')
@@ -129,10 +123,8 @@ class WorkerUpViewsSet(viewsets.ModelViewSet):
 
 class CompanyViewSet(viewsets.ModelViewSet):
     """Like worker or admin you can see info about your company, admin can change his name and address"""
-    # permission_classes = [IsAuthenticated, ]
     serializer_class = CompaniesSerializer
     queryset = Company.objects.all()
-    authentication_classes = [TokenAuthentication, ]
 
     def get_queryset(self):
         queryset = Company.objects.filter(id=self.request.user.company.id)
@@ -159,9 +151,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
 class ProfileViewSet(viewsets.ModelViewSet):
     """Like a worker of company, You can see your profile(first name, last name, email) and change the password"""
     serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated, ]
     queryset = MyUser.objects.all()
-    authentication_classes = [TokenAuthentication, ]
 
     def get_queryset(self):
         queryset = MyUser.objects.filter(id=self.request.user.id)
@@ -182,24 +172,17 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
 class OfficeViewSet(viewsets.ModelViewSet):
     """Admin can create the office, and admin and worker can see list of company offices"""
-    # permission_classes = [IsAdminUser, ]
     serializer_class = OfficeSerializer
     queryset = Office.objects.all()
-    authentication_classes = [TokenAuthentication, ]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['country', 'city']
 
     def create(self, request, *args, **kwargs):
         serializer = OfficeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.is_valid():
-            # company = serializer.validated_data['company']
             company = self.request.user.company
-            office = Office.objects.create(
-                office_name=serializer.validated_data['office_name'],
-                address=serializer.validated_data['address'],
-                country=serializer.validated_data['country'],
-                city=serializer.validated_data['city'],
-                region=serializer.validated_data['region'],
-                company=company)
+            office = Office.objects.create(company=company, **serializer.validated_data)
             office.save()
             data = {'success': 'You create the company Successfully'}
             return Response(data=data, status=status.HTTP_201_CREATED)
@@ -207,20 +190,6 @@ class OfficeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Office.objects.filter(company=self.request.user.company)
-        country = self.request.query_params.get('country', None)
-        city = self.request.query_params.get('city', None)
-
-        if country and city:
-            queryset = queryset.filter(country=country, city=city)
-
-        elif city:
-            queryset = queryset.filter(city=city)
-
-        elif country:
-            queryset = queryset.filter(country=country)
-
-        else:
-            queryset = Office.objects.filter(company=self.request.user.company)
 
         return queryset
 
@@ -236,7 +205,6 @@ class DetailOfficeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser, ]
     serializer_class = OfficeDetailSerializer
     queryset = Office.objects.all()
-    authentication_classes = [TokenAuthentication, ]
 
     def put(self, request, *args, **kwargs):
         pk = self.kwargs.get('pk')
@@ -265,14 +233,13 @@ class DetailOfficeViewSet(viewsets.ModelViewSet):
 class WorkerOfficeViewSet(viewsets.ModelViewSet):
     """Admin can appoint to one of companies offices"""
     permission_classes = [IsAdminUser, ]
-    serializer_class = WorkerOfficeSerializer
+    serializer_class = AddWorkerToOfficeSerializer
     queryset = Office.objects.all()
-    authentication_classes = [TokenAuthentication, ]
 
     def put(self, request, *args, **kwargs):
         pk = self.kwargs.get('pk')
         office = get_object_or_404(Office.objects.filter(id=pk, company=self.request.user.company))
-        serializer = WorkerOfficeSerializer(instance=office, data=request.data, partial=True)
+        serializer = AddWorkerToOfficeSerializer(instance=office, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -287,10 +254,8 @@ class WorkerOfficeViewSet(viewsets.ModelViewSet):
 
 class WorkerOfficeDetailViewSet(viewsets.ModelViewSet):
     """Worker cas see details his office"""
-    permission_classes = [IsAuthenticated, ]
     serializer_class = OfficeDetailSerializer
     queryset = Office.objects.all()
-    authentication_classes = [TokenAuthentication, ]
 
     def get_queryset(self):
         queryset = Office.objects.filter(worker=self.request.user.id)
@@ -302,7 +267,8 @@ class VehicleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser, ]
     serializer_class = VehicleSerializer
     queryset = Vehicle.objects.all()
-    authentication_classes = [TokenAuthentication, ]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['driver', 'office']
 
     def create(self, request, *args, **kwargs):
         serializer = VehicleSerializer(data=request.data)
@@ -317,20 +283,6 @@ class VehicleViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Vehicle.objects.filter(company=self.request.user.company)
-        driver = self.request.query_params.get('driver', None)
-        office = self.request.query_params.get('office', None)
-
-        if driver and office:
-            queryset = queryset.filter(driver=driver, office=office)
-
-        elif office:
-            queryset = queryset.filter(office=office)
-
-        elif driver:
-            queryset = queryset.filter(driver=driver)
-
-        else:
-            queryset = Vehicle.objects.filter(company=self.request.user.company)
 
         return queryset
 
@@ -340,7 +292,6 @@ class VehicleChangeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser, ]
     serializer_class = VehicleSerializer
     queryset = Vehicle.objects.all()
-    authentication_classes = [TokenAuthentication, ]
 
     def put(self, request, *args, **kwargs):
         pk = self.kwargs.get('pk')
@@ -368,10 +319,8 @@ class VehicleChangeViewSet(viewsets.ModelViewSet):
 
 class VehicleProfileViewSet(viewsets.ModelViewSet):
     """You can see a list of vehicles whose driver you are"""
-    permission_classes = [IsAuthenticated, ]
     serializer_class = VehicleSerializer
     queryset = Vehicle.objects.all()
-    authentication_classes = [TokenAuthentication, ]
 
     def get_queryset(self):
         driver = self.request.user.id

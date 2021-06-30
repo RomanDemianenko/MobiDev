@@ -1,5 +1,4 @@
 import django_filters
-
 from service.models import MyUser, Office, Vehicle
 
 
