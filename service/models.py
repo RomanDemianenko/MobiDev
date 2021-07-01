@@ -30,7 +30,7 @@ class Office(models.Model):
     city = models.CharField(max_length=50)
     region = models.CharField(max_length=50)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, blank=True, null=True)
-    worker = models.ForeignKey(MyUser, on_delete=models.CASCADE, blank=True, null=True)
+    employee = models.ForeignKey(MyUser, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return f'{self.office_name}'

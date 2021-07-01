@@ -18,21 +18,21 @@ from django.urls import path, include
 from django.contrib.auth import views
 from rest_framework import routers
 
-from service.api.resourse import AuthToken, WorkerViewSet, CompanyViewSet, ProfileViewSet, OfficeViewSet, \
-    DetailOfficeViewSet, WorkerUpViewsSet, AssignWorkerToOfficeViewSet, WorkerOfficeDetailViewSet, VehicleViewSet, \
+from service.api.resourse import AuthToken, EmployeeViewSet, CompanyViewSet, ProfileViewSet, OfficeViewSet, \
+    DetailOfficeViewSet, EmployeeUpViewsSet, AssignEmployeeToOfficeViewSet, EmployeeOfficeDetailViewSet, VehicleViewSet, \
     VehicleChangeViewSet, VehicleProfileViewSet, CompanyCreateViewSet
 
 
 router = routers.SimpleRouter()
 router.register(r'auth', CompanyCreateViewSet, basename='auth')
-router.register(r'worker', WorkerViewSet, basename='worker')
-router.register(r'worker_up', WorkerUpViewsSet, basename='worker_up')
+router.register(r'employee', EmployeeViewSet, basename='employee')
+router.register(r'employee_up', EmployeeUpViewsSet, basename='employee_up')
 router.register(r'company', CompanyViewSet, basename='company')
 router.register(r'profile', ProfileViewSet, basename='profile')
 router.register(r'office', OfficeViewSet, basename='office')
 router.register(r'detail_office', DetailOfficeViewSet, basename='office')
-router.register(r'worker_office', AssignWorkerToOfficeViewSet, basename='worker_office')
-router.register(r'worker_office_detail', WorkerOfficeDetailViewSet, basename='worker_office_detail')
+router.register(r'employee_office', AssignEmployeeToOfficeViewSet, basename='employee_office')
+router.register(r'employee_office_detail', EmployeeOfficeDetailViewSet, basename='employee_office_detail')
 router.register(r'vehicle', VehicleViewSet, basename='vehicle')
 router.register(r'vehicle_change', VehicleChangeViewSet, basename='vehicle_change')
 router.register(r'vehicle_profile', VehicleProfileViewSet, basename='vehicle_profile')

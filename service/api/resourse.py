@@ -5,16 +5,16 @@ from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import get_object_or_404
-from service.api.serializers import MyAuthTokenSerializer, WorkerCreateSerializer, \
-    CompaniesSerializer, ProfileSerializer, OfficeSerializer, OfficeDetailSerializer, AssignWorkerToOfficeSerializer, \
+from service.api.serializers import MyAuthTokenSerializer, EmployeeCreateSerializer, \
+    CompaniesSerializer, ProfileSerializer, OfficeSerializer, OfficeDetailSerializer, AssignEmployeeToOfficeSerializer, \
     VehicleSerializer, UserRegisterSerializer
 from service.models import MyUser, Company, Office, Vehicle
 from rest_framework.authtoken.models import Token
 
 
 class CompanyCreateViewSet(viewsets.ModelViewSet):
-    """View for Create Company, where user automatically become the Admin of Company.
-    Also, we write Name of Company.  """
+    """View for Create Company, where the user automatically becomes the Admin of the Company.
+    Also, we give a company the name.  """
     permission_classes = [AllowAny, ]
     serializer_class = UserRegisterSerializer
 
@@ -22,7 +22,7 @@ class CompanyCreateViewSet(viewsets.ModelViewSet):
         serializer = UserRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.validated_data['password'] != serializer.validated_data['confirm_password']:
-            data = {"Passwords don`t pass"}
+            data = {"Passwords don`t match"}
             return Response(data=data, status=status.HTTP_409_CONFLICT)
         if serializer.is_valid():
             company = serializer.validated_data['company']
@@ -34,7 +34,7 @@ class CompanyCreateViewSet(viewsets.ModelViewSet):
             user.set_password(serializer.validated_data['password'])
             user.save()
             company_obj.save()
-            data = {'success': 'You create the company Successfully'}
+            data = {'success': "Company is created successfully"}
             return Response(data=data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -53,20 +53,20 @@ class AuthToken(ObtainAuthToken):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class WorkerViewSet(viewsets.ModelViewSet):
-    """Admin can create a worker of his company(without field admin), can see list of company workers
+class EmployeeViewSet(viewsets.ModelViewSet):
+    """Admin can create an employee of his company(without field admin), can see list of company employees
     and filter them by first name, last name, email"""
     permission_classes = [IsAdminUser, ]
-    serializer_class = WorkerCreateSerializer
+    serializer_class = EmployeeCreateSerializer
     queryset = MyUser.objects.all()
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['first_name', 'last_name', 'email']
 
     def create(self, request, *args, **kwargs):
-        serializer = WorkerCreateSerializer(data=request.data)
+        serializer = EmployeeCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.validated_data['password'] != serializer.validated_data['confirm_password']:
-            data = {"Passwords don`t pass"}
+            data = {"Passwords don`t match"}
             return Response(data=data, status=status.HTTP_409_CONFLICT)
         if serializer.is_valid():
             company = self.request.user.company
@@ -75,7 +75,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
             user.set_password(serializer.validated_data['password'])
             user.save()
             company.save()
-            data = {'success': 'You add worker to company'}
+            data = {'success': 'You assign an employee to the company'}
             return Response(data=data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -84,9 +84,9 @@ class WorkerViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class WorkerUpViewsSet(viewsets.ModelViewSet):
+class EmployeeUpViewsSet(viewsets.ModelViewSet):
     """Admin can change(first name, last name, password, NOT email), see details(first name, last name, email)
-    and delete worker"""
+    and delete employee"""
     permission_classes = [IsAdminUser, ]
     serializer_class = ProfileSerializer
     queryset = MyUser.objects.all()
@@ -100,8 +100,8 @@ class WorkerUpViewsSet(viewsets.ModelViewSet):
     def put(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
         company = self.request.user.company
-        worker = get_object_or_404(MyUser.objects.filter(pk=pk, company=company, is_staff=False))
-        serializer = ProfileSerializer(instance=worker, data=request.data, partial=True)
+        employee = get_object_or_404(MyUser.objects.filter(pk=pk, company=company, is_staff=False))
+        serializer = ProfileSerializer(instance=employee, data=request.data, partial=True)
 
         if serializer.is_valid():
             self.perform_update(serializer)
@@ -119,12 +119,12 @@ class WorkerUpViewsSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         hashed_password = make_password(serializer.validated_data['password'])
         serializer.validated_data['password'] = hashed_password
-        worker = super(WorkerUpViewsSet, self).perform_update(serializer)
-        return worker
+        employee = super(EmployeeUpViewsSet, self).perform_update(serializer)
+        return employee
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
-    """Like worker or admin you can see info about your company, admin can change his name and address"""
+    """ As an employee/admin you able to add company info. Admin can change name and address"""
     serializer_class = CompaniesSerializer
     queryset = Company.objects.all()
 
@@ -151,7 +151,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
-    """Like a worker of company, You can see your profile(first name, last name, email) and change the password"""
+    """An employee can see his profile(first name, last name, email) and change the password"""
     serializer_class = ProfileSerializer
     queryset = MyUser.objects.all()
 
@@ -173,7 +173,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
 
 class OfficeViewSet(viewsets.ModelViewSet):
-    """Admin can create the office, and admin and worker can see list of company offices"""
+    """Admin can create the office, and admin/employee can see list of company offices"""
     serializer_class = OfficeSerializer
     queryset = Office.objects.all()
     filter_backends = [DjangoFilterBackend]
@@ -186,7 +186,7 @@ class OfficeViewSet(viewsets.ModelViewSet):
             company = self.request.user.company
             office = Office.objects.create(company=company, **serializer.validated_data)
             office.save()
-            data = {'success': 'You create the company Successfully'}
+            data = {'success': 'Office is created successfully'}
             return Response(data=data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -203,7 +203,7 @@ class OfficeViewSet(viewsets.ModelViewSet):
 
 
 class DetailOfficeViewSet(viewsets.ModelViewSet):
-    """Admin can change/delete/see details one of his offices"""
+    """Admin can change/delete/get details one of his offices"""
     permission_classes = [IsAdminUser, ]
     serializer_class = OfficeDetailSerializer
     queryset = Office.objects.all()
@@ -232,16 +232,16 @@ class DetailOfficeViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class AssignWorkerToOfficeViewSet(viewsets.ModelViewSet):
-    """Admin can assign worker to one of companies offices"""
+class AssignEmployeeToOfficeViewSet(viewsets.ModelViewSet):
+    """Admin can assign employee to one of companies offices"""
     permission_classes = [IsAdminUser, ]
-    serializer_class = AssignWorkerToOfficeSerializer
+    serializer_class = AssignEmployeeToOfficeSerializer
     queryset = Office.objects.all()
 
     def put(self, request, *args, **kwargs):
         pk = self.kwargs.get('pk')
         office = get_object_or_404(Office.objects.filter(id=pk, company=self.request.user.company))
-        serializer = AssignWorkerToOfficeSerializer(instance=office, data=request.data, partial=True)
+        serializer = AssignEmployeeToOfficeSerializer(instance=office, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -254,13 +254,13 @@ class AssignWorkerToOfficeViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class WorkerOfficeDetailViewSet(viewsets.ModelViewSet):
-    """Worker cas see details his office"""
+class EmployeeOfficeDetailViewSet(viewsets.ModelViewSet):
+    """Employee cas review his office details"""
     serializer_class = OfficeDetailSerializer
     queryset = Office.objects.all()
 
     def get_queryset(self):
-        queryset = Office.objects.filter(worker=self.request.user.id)
+        queryset = Office.objects.filter(employee=self.request.user.id)
         return queryset
 
 
@@ -320,7 +320,7 @@ class VehicleChangeViewSet(viewsets.ModelViewSet):
 
 
 class VehicleProfileViewSet(viewsets.ModelViewSet):
-    """You can see a list of vehicles whose driver you are"""
+    """The employee can view the list of vehicles he drives"""
     serializer_class = VehicleSerializer
     queryset = Vehicle.objects.all()
 

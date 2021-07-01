@@ -42,7 +42,7 @@ class RegistCompanyForm(ModelForm):
         fields = ['first_name', 'last_name', 'email', 'password', 'repeat_password']
 
 
-class WorkerProfileForm(ModelForm):
+class EmployeeProfileForm(ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
     repeat_password = forms.CharField(widget=forms.PasswordInput)
 
@@ -76,24 +76,23 @@ class OfficeForm(ModelForm):
         fields = ['office_name', 'address', 'country', 'city', 'region']
 
 
-class WorkerOfficeForm(ModelForm):
+class EmployeeOfficeForm(ModelForm):
     class Meta:
         model = Office
-        fields = ['worker']
+        fields = ['employee']
 
-    def clean_worker(self):
-        worker = self.cleaned_data['worker'].id
-        if Office.objects.filter(worker=worker).exists():
+    def clean_employee(self):
+        employee = self.cleaned_data['employee'].id
+        if Office.objects.filter(employee=employee).exists():
             raise forms.ValidationError(f'This has already worked in another office')
         return self.cleaned_data
 
     def clean_same_company(self):
-        worker = self.cleaned_data['worker'].company.id
+        employee = self.cleaned_data['employee'].company.id
         admin = self.request.user.user.company.id
-        # worker = MyUser.objects.get(id=worker_pk)
-        if worker != admin:
+        if employee != admin:
             raise forms.ValidationError(f'This different company')
-        return worker
+        return employee
 
 
 class VehicleForm(ModelForm):

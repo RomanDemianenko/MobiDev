@@ -12,7 +12,7 @@ class CompanySerializer(serializers.ModelSerializer):
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     """Serializer for Create Company, where user automatically become the Admin of Company.
-    We use nested Companyserializer and take filed company_name.  """
+    We use nested CompanySerializer and take field company_name.  """
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     confirm_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     email = serializers.EmailField(label="email", required=True)
@@ -53,8 +53,8 @@ class MyAuthTokenSerializer(serializers.Serializer):
         return attrs
 
 
-class WorkerCreateSerializer(serializers.ModelSerializer):
-    """Admin can create worker for his company."""
+class EmployeeCreateSerializer(serializers.ModelSerializer):
+    """Admin can create Employee for his company."""
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     confirm_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     email = serializers.EmailField(label="Email", required=True)
@@ -77,7 +77,7 @@ class CompaniesSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    """Worker can see his profile, and change it, exclude EMAIL"""
+    """Employee can see his profile, and change it, exclude EMAIL"""
     class Meta:
         model = MyUser
         fields = ('id', 'first_name', 'last_name', 'email', 'password')
@@ -96,26 +96,25 @@ class OfficeSerializer(serializers.ModelSerializer):
 class OfficeDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Office
-        fields = ('id', 'office_name', 'address', 'country', 'city', 'region', 'worker')
-        read_only_fields = ('id', 'worker')
+        fields = ('id', 'office_name', 'address', 'country', 'city', 'region', 'employee')
+        read_only_fields = ('id', 'employee')
 
 
-class AssignWorkerToOfficeSerializer(serializers.ModelSerializer):
-    """We assign worker to office, and he can be only in one office"""
+class AssignEmployeeToOfficeSerializer(serializers.ModelSerializer):
+    """Employee can be only assigned to a one office"""
     class Meta:
         model = Office
-        fields = ('id', 'worker')
+        fields = ('id', 'employee')
 
     def validate(self, data):
-        worker = data['worker']
-        if Office.objects.filter(worker=worker).exists():
-            raise serializers.ValidationError(f'This {worker} has already working in office')
+        employee = data['employee']
+        if Office.objects.filter(employee=employee).exists():
+            raise serializers.ValidationError(f'This {employee} has already exists in a current office')
         return data
 
 
 class VehicleSerializer(serializers.ModelSerializer):
-    """Serializer for create Vehicle. When admin choose driver and office for vehicle,
-     driver must work in the same office, which choose Admin. """
+    """Serializer for create Vehicle. Driver should belong to the office chosen by admin. """
     class Meta:
         model = Vehicle
         fields = ('id', 'licence_plate', 'name', 'model', 'year_of_manufacture', 'office', 'driver')
@@ -127,10 +126,10 @@ class VehicleSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if data['driver'] is not None and data['office'] is not None:
-            if Office.objects.filter(worker=data['driver']).filter(id=data['office'].id):
+            if Office.objects.filter(employee=data['driver']).filter(id=data['office'].id):
                 pass
             else:
-                raise serializers.ValidationError(f'The Worker work in another office')
+                raise serializers.ValidationError(f'The Employee work in another office')
             return data
         else:
             return data
